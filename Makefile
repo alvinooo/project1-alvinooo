@@ -1,8 +1,8 @@
 
 CC=g++
-CFLAGS=-ggdb -Wall -Wextra -pedantic -Werror
-DEPS = httpd.h
-SRCS = httpd.cpp
+CFLAGS=-ggdb -Wall -Wextra -pedantic -Werror -std=c++0x
+DEPS = httpd.h httpd_util.h Stream.h Request.h Response.h
+SRCS = httpd.cpp httpd_util.cpp Stream.cpp Request.cpp Response.cpp
 MAIN_SRCS = main.c $(SRCS)
 MAIN_OBJS = $(MAIN_SRCS:.c=.o)
 
