@@ -1,10 +1,10 @@
 #ifndef HTTPD_H
 #define HTTPD_H
 
-#include <string>
+#include "httpd_util.h"
 
-using namespace std;
+void start_httpd(unsigned short port, std::string doc_root);
 
-void start_httpd(unsigned short port, string doc_root);
+static const int MAXPENDING = 5; // Maximum outstanding connection requests
 
 #endif // HTTPD_H
