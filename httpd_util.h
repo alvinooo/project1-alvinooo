@@ -26,15 +26,20 @@
 class ThreadArgs
 {
 public:
-	ThreadArgs(int _socket, std::string _doc_root);
+	ThreadArgs(int _threadIndex, int _socket, std::string _doc_root);
 	~ThreadArgs();
 
+	static std::vector<pthread_t *> threadOcean;
+	static pthread_mutex_t threadOceanMutex;
+	int threadIndex;
 	int socket;
 	std::string doc_root;
 };
 
+void spawnThread(int clntSock, std::string doc_root);
+void * HandleTCPClient(void * args);
+void cleanupThread(void * args);
 void DieWithSystemMessage(const char *msg);
-void HandleTCPClient(void * args);
 void debugPrint(char *buffer, int size);
 
 enum sizeConstants

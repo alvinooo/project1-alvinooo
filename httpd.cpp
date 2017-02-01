@@ -59,12 +59,24 @@ void start_httpd(unsigned short port, std::string doc_root)
 				ntohs(clntAddr.sin_port) << std::endl;
 		else
 			std::cerr << "Unable to get client address" << std::endl;
-
-		// pthread_t thread;
-		void * args = new ThreadArgs(clntSock, doc_root);
-		// std::cerr << "client should be: " << clntSock << std::endl;
-		// pthread_create(&thread, NULL, HandleTCPClient, args);
-		HandleTCPClient(args);
-		delete ((ThreadArgs *) args);
+		spawnThread(clntSock, doc_root);
 	}
+}
+
+void spawnThread(int clntSock, std::string doc_root)
+{
+	pthread_t * thread = new pthread_t();
+	unsigned int threadIndex = ThreadArgs::threadOcean.size();
+	for (unsigned int i = 0; i < ThreadArgs::threadOcean.size(); i++) {
+		if (!ThreadArgs::threadOcean[i]) {
+			threadIndex = i;
+			pthread_mutex_lock(&ThreadArgs::threadOceanMutex);
+			ThreadArgs::threadOcean[i] = thread;
+			pthread_mutex_unlock(&ThreadArgs::threadOceanMutex);
+		}
+	}
+	if (threadIndex == ThreadArgs::threadOcean.size())
+		ThreadArgs::threadOcean.push_back(thread);
+	void * args = new ThreadArgs(threadIndex, clntSock, doc_root);
+	pthread_create(thread, NULL, HandleTCPClient, args);
 }

@@ -5,18 +5,20 @@
 
 using namespace std;
 
-ThreadArgs::ThreadArgs(int _socket, string _doc_root)
-	: socket(_socket), doc_root(_doc_root) { }
+ThreadArgs::ThreadArgs(int _threadIndex, int _socket, string _doc_root)
+	: threadIndex(_threadIndex), socket(_socket), doc_root(_doc_root) { }
 
 ThreadArgs::~ThreadArgs() { }
 
-void HandleTCPClient(void * args) {
+std::vector<pthread_t *> ThreadArgs::threadOcean = std::vector<pthread_t *>();
+pthread_mutex_t ThreadArgs::threadOceanMutex = PTHREAD_MUTEX_INITIALIZER;
 
-	// pthread_detach(pthread_self());
+void * HandleTCPClient(void * args) {
+
+	pthread_detach(pthread_self());
 
 	int clntSocket = ((ThreadArgs *) args)->socket;
 	string doc_root = ((ThreadArgs *) args)->doc_root;
-	// std::cerr << "client: " << clntSocket << std::endl;
 
 	char buffer[BUFSIZE]; // Used to construct HTTP request
 
@@ -28,17 +30,18 @@ void HandleTCPClient(void * args) {
 	for (;;) {
 
 		memset(buffer, 0, BUFSIZE);
-		alarm(TIMEOUT);
+		// alarm(TIMEOUT);
 
 		// Receive message from client
 		numBytesRcvd = recv(clntSocket, buffer, BUFSIZE, 0);
 
 		if (numBytesRcvd < 0) {
+
 			// Close connection on timeout
 			if (errno == EINTR) {
 				cerr << "Client timed out... closing connection" << endl;
-				close(clntSocket);
-				return;
+				cleanupThread(args);
+				return NULL;
 			} else {
 				DieWithSystemMessage("recv() failed");
 			}
@@ -52,16 +55,37 @@ void HandleTCPClient(void * args) {
 				alarm(0);
 				Response res = Response(req, clntSocket, doc_root);
 				if (res.line.find("400") != string::npos) {
-					close(clntSocket);
-					return;
+					cleanupThread(args);
+					return NULL;
 				}
 			}
 			if (req.header["Connection"].find("close") != string::npos) {
-				close(clntSocket);
-				return;
+				cleanupThread(args);
+				return NULL;
 			}
 		}
 	}
+	cleanupThread(args);
+	return NULL;
+}
+
+void cleanupThread(void * args)
+{
+	alarm(0);
+
+	int clntSocket = ((ThreadArgs *) args)->socket;
+	int threadIndex = ((ThreadArgs *) args)->threadIndex;
+
+	pthread_mutex_lock(&ThreadArgs::threadOceanMutex);
+	delete ThreadArgs::threadOcean[threadIndex];
+	ThreadArgs::threadOcean[threadIndex] = NULL;
+	pthread_mutex_unlock(&ThreadArgs::threadOceanMutex);
+
+	// for (unsigned int i = 0; i < ((ThreadArgs *) args)->threadOcean.size(); i++)
+	// 	cerr << "Connection thread " << i << " " << ((ThreadArgs *) args)->threadOcean[i] << endl;
+
+	close(clntSocket);
+	delete ((ThreadArgs *) args);
 }
 
 void DieWithSystemMessage(const char *msg) {

@@ -85,6 +85,10 @@ void Request::parseHeader(char * frame, int size)
 		string key, value;
 		key.append(keyValStart, colon - keyValStart);
 		value.append(colon + 1, keyValEnd - colon);
+		if (key.size() == 0 || value.size() == 0) {
+			valid = 0;
+			return;
+		}
 		header[key] = value;
 	}
 	
