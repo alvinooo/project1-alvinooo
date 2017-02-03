@@ -14,14 +14,12 @@
 #include <sys/stat.h>
 #include <sys/sendfile.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
 #include <errno.h>
-#include <signal.h>
-
-#define TIMEOUT 5
 
 class ThreadArgs
 {

@@ -27,10 +27,19 @@ void * HandleTCPClient(void * args) {
 
 	Stream stream;
 	Request req;
+
+	struct timeval tv;
+	tv.tv_sec = 5;
+	tv.tv_usec = 0;
+
+	if (setsockopt(clntSocket, SOL_SOCKET, SO_RCVTIMEO,
+		(struct timeval *) &tv, sizeof(struct timeval)) != 0) {
+		DieWithSystemMessage("setsockopt() failed");
+	}
+
 	for (;;) {
 
 		memset(buffer, 0, BUFSIZE);
-		// alarm(TIMEOUT);
 
 		// Receive message from client
 		numBytesRcvd = recv(clntSocket, buffer, BUFSIZE, 0);
@@ -38,7 +47,7 @@ void * HandleTCPClient(void * args) {
 		if (numBytesRcvd < 0) {
 
 			// Close connection on timeout
-			if (errno == EINTR) {
+			if (errno == EWOULDBLOCK) {
 				cerr << "Client timed out... closing connection" << endl;
 				cleanupThread(args);
 				return NULL;
@@ -80,9 +89,6 @@ void cleanupThread(void * args)
 	delete ThreadArgs::threadOcean[threadIndex];
 	ThreadArgs::threadOcean[threadIndex] = NULL;
 	pthread_mutex_unlock(&ThreadArgs::threadOceanMutex);
-
-	// for (unsigned int i = 0; i < ((ThreadArgs *) args)->threadOcean.size(); i++)
-	// 	cerr << "Connection thread " << i << " " << ((ThreadArgs *) args)->threadOcean[i] << endl;
 
 	close(clntSocket);
 	delete ((ThreadArgs *) args);

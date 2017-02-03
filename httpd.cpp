@@ -1,21 +1,10 @@
 #include "httpd.h"
 #include "httpd_util.h"
 
-void timeoutHandler(int _) { (void) _; }
-
 void start_httpd(unsigned short port, std::string doc_root)
 {
 	std::cerr << "Starting server (port: " << port <<
 		", doc_root: " << doc_root << ")" << std::endl;
-
-	// Setup timeout handler	
-	struct sigaction handler;
-  	handler.sa_handler = timeoutHandler;
-  	if (sigfillset(&handler.sa_mask) < 0)
-  		DieWithSystemMessage("sigfillset() failed");
-  	handler.sa_flags = 0;
-  	if (sigaction(SIGALRM, &handler, 0) < 0)
-  		DieWithSystemMessage("sigaction() failed for SIGALRM");
 
 	// Create listening socket
 	int servSock;
@@ -49,6 +38,10 @@ void start_httpd(unsigned short port, std::string doc_root)
 
 		// Wait for a client to connect
 		int clntSock = accept(servSock, (struct sockaddr *) &clntAddr, &clntAddrLen);
+		if (errno == EINTR) {
+			std::cerr << "Blocking main thread" << std::endl;
+			clntSock = accept(servSock, (struct sockaddr *) &clntAddr, &clntAddrLen);
+		}
 		if (clntSock < 0)
 			DieWithSystemMessage("accept() failed");
 
