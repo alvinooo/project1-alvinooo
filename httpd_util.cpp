@@ -5,8 +5,8 @@
 
 using namespace std;
 
-ThreadArgs::ThreadArgs(int _threadIndex, int _socket, string _doc_root)
-	: threadIndex(_threadIndex), socket(_socket), doc_root(_doc_root) { }
+ThreadArgs::ThreadArgs(int _threadIndex, int _socket, unsigned long _addr, string _doc_root)
+	: threadIndex(_threadIndex), socket(_socket), addr(_addr), doc_root(_doc_root) { }
 
 ThreadArgs::~ThreadArgs() { }
 
@@ -18,6 +18,7 @@ void * HandleTCPClient(void * args) {
 	pthread_detach(pthread_self());
 
 	int clntSocket = ((ThreadArgs *) args)->socket;
+	unsigned long addr = ((ThreadArgs *) args)->addr;
 	string doc_root = ((ThreadArgs *) args)->doc_root;
 
 	char buffer[BUFSIZE]; // Used to construct HTTP request
@@ -34,6 +35,7 @@ void * HandleTCPClient(void * args) {
 
 	if (setsockopt(clntSocket, SOL_SOCKET, SO_RCVTIMEO,
 		(struct timeval *) &tv, sizeof(struct timeval)) != 0) {
+		cleanupThread(args);
 		DieWithSystemMessage("setsockopt() failed");
 	}
 
@@ -52,17 +54,18 @@ void * HandleTCPClient(void * args) {
 				cleanupThread(args);
 				return NULL;
 			} else {
+				cleanupThread(args);
 				DieWithSystemMessage("recv() failed");
 			}
 		}
 		else if (numBytesRcvd == 0)
 			break;
+
 		stream.append(buffer, numBytesRcvd);
+
 		while (stream.getRequest(req)) {
 			if (req.complete || !req.valid) {
-				// Reset timeout
-				alarm(0);
-				Response res = Response(req, clntSocket, doc_root);
+				Response res = Response(req, clntSocket, addr, doc_root);
 				if (res.line.find("400") != string::npos) {
 					cleanupThread(args);
 					return NULL;
@@ -80,10 +83,9 @@ void * HandleTCPClient(void * args) {
 
 void cleanupThread(void * args)
 {
-	alarm(0);
-
 	int clntSocket = ((ThreadArgs *) args)->socket;
 	int threadIndex = ((ThreadArgs *) args)->threadIndex;
+	delete ((ThreadArgs *) args);
 
 	pthread_mutex_lock(&ThreadArgs::threadOceanMutex);
 	delete ThreadArgs::threadOcean[threadIndex];
@@ -91,10 +93,10 @@ void cleanupThread(void * args)
 	pthread_mutex_unlock(&ThreadArgs::threadOceanMutex);
 
 	close(clntSocket);
-	delete ((ThreadArgs *) args);
 }
 
-void DieWithSystemMessage(const char *msg) {
+void DieWithSystemMessage(const char *msg)
+{
 	cerr << msg << endl;
 	exit(1);
 }

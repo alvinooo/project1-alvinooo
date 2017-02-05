@@ -20,21 +20,23 @@
 #include <netdb.h>
 #include <string.h>
 #include <errno.h>
+#include <fstream>
 
 class ThreadArgs
 {
 public:
-	ThreadArgs(int _threadIndex, int _socket, std::string _doc_root);
+	ThreadArgs(int _threadIndex, int _socket, unsigned long addr, std::string _doc_root);
 	~ThreadArgs();
 
 	static std::vector<pthread_t *> threadOcean;
 	static pthread_mutex_t threadOceanMutex;
 	int threadIndex;
 	int socket;
+	unsigned long addr;
 	std::string doc_root;
 };
 
-void spawnThread(int clntSock, std::string doc_root);
+void spawnThread(int clntSock, unsigned long addr, std::string doc_root);
 void * HandleTCPClient(void * args);
 void cleanupThread(void * args);
 void DieWithSystemMessage(const char *msg);

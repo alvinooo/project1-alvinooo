@@ -1,5 +1,6 @@
 #include "httpd.h"
 #include "httpd_util.h"
+#include "Response.h"
 
 void start_httpd(unsigned short port, std::string doc_root)
 {
@@ -52,11 +53,11 @@ void start_httpd(unsigned short port, std::string doc_root)
 				ntohs(clntAddr.sin_port) << std::endl;
 		else
 			std::cerr << "Unable to get client address" << std::endl;
-		spawnThread(clntSock, doc_root);
+		spawnThread(clntSock, clntAddr.sin_addr.s_addr, doc_root);
 	}
 }
 
-void spawnThread(int clntSock, std::string doc_root)
+void spawnThread(int clntSock, unsigned long addr, std::string doc_root)
 {
 	pthread_t * thread = new pthread_t();
 	unsigned int threadIndex = ThreadArgs::threadOcean.size();
@@ -67,9 +68,10 @@ void spawnThread(int clntSock, std::string doc_root)
 			ThreadArgs::threadOcean[i] = thread;
 			pthread_mutex_unlock(&ThreadArgs::threadOceanMutex);
 		}
+		// cout << ThreadArgs::threadOcean[i] << endl;
 	}
 	if (threadIndex == ThreadArgs::threadOcean.size())
 		ThreadArgs::threadOcean.push_back(thread);
-	void * args = new ThreadArgs(threadIndex, clntSock, doc_root);
+	void * args = new ThreadArgs(threadIndex, clntSock, addr, doc_root);
 	pthread_create(thread, NULL, HandleTCPClient, args);
 }
