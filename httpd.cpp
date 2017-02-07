@@ -2,10 +2,13 @@
 #include "httpd_util.h"
 #include "Response.h"
 
+unsigned int poolSize;
+
 void start_httpd(unsigned short port, std::string doc_root)
 {
 	std::cerr << "Starting server (port: " << port <<
-		", doc_root: " << doc_root << ")" << std::endl;
+		", doc_root: " << doc_root << ", thread pool size " <<
+		poolSize << ")" << std::endl;
 
 	// Create listening socket
 	int servSock;
@@ -33,16 +36,48 @@ void start_httpd(unsigned short port, std::string doc_root)
 	if (listen(servSock, MAXPENDING) < 0)
 		DieWithSystemMessage("listen() failed");
 
+	if (poolSize > 0) {
+		void * servArgs = new ThreadArgs(NULL, servSock, doc_root);
+		ThreadPool pool = ThreadPool(acceptLoopWrapper, servArgs, poolSize);
+		delete (ThreadArgs *) servArgs;
+
+		(void) pool;
+		for (;;) {
+			// struct sockaddr_in clntAddr;
+			// socklen_t clntAddrLen = sizeof(clntAddr);
+			// int clntSock = accept(servSock, (struct sockaddr *) &clntAddr, &clntAddrLen);
+			// if (clntSock < 0)
+			// 	DieWithSystemMessage("accept() failed");
+			// cout << "TODO: Main thread enqueue client " << clntSock << endl;
+			pthread_yield();
+			// for (int i = 0; i < poolSize; i++) {
+			// 	pthread_join(threads[i], NULL);
+			// }
+		}
+	} else {
+		acceptLoop(servSock, doc_root, NULL);
+	}
+}
+
+void * acceptLoopWrapper(void * args)
+{
+	ThreadArgs * servArgs = (ThreadArgs *) args;
+	acceptLoop(servArgs->socket, servArgs->doc_root, servArgs->pool);
+	return NULL;
+}
+
+void acceptLoop(int servSock, std::string doc_root, ThreadPool * pool)
+{
+	(void) servSock;
+	(void) doc_root;
+	(void) pool;
+
 	for (;;) {
 		struct sockaddr_in clntAddr;
 		socklen_t clntAddrLen = sizeof(clntAddr);
 
 		// Wait for a client to connect
 		int clntSock = accept(servSock, (struct sockaddr *) &clntAddr, &clntAddrLen);
-		if (errno == EINTR) {
-			std::cerr << "Blocking main thread" << std::endl;
-			clntSock = accept(servSock, (struct sockaddr *) &clntAddr, &clntAddrLen);
-		}
 		if (clntSock < 0)
 			DieWithSystemMessage("accept() failed");
 
@@ -53,25 +88,33 @@ void start_httpd(unsigned short port, std::string doc_root)
 				ntohs(clntAddr.sin_port) << std::endl;
 		else
 			std::cerr << "Unable to get client address" << std::endl;
-		spawnThread(clntSock, clntAddr.sin_addr.s_addr, doc_root);
+		// if (pool) {
+		// 	if (pool->available > 0) {
+		// 		pthread_mutex_lock(&pool->threadPoolMutex);
+		// 		pool->available--;
+		// 		pthread_mutex_unlock(&pool->threadPoolMutex);
+
+		// 		cout << "pool thread handling client socket " << clntSock << endl;
+		// 		cout << "Pool size " << pool->available << endl;
+		// 		void * args = new ThreadArgs(NULL, clntSock, doc_root,
+		// 			clntAddr.sin_addr.s_addr, pool);
+		// 		HandleTCPClient(args);
+
+		// 		pthread_mutex_lock(&pool->threadPoolMutex);
+		// 		pool->available++;
+		// 		pthread_mutex_unlock(&pool->threadPoolMutex);
+		// 	} else {
+		// 		cout << "TODO: pool thread Enqueue " << clntSock << endl;
+		// 	}
+		// }
+		// else
+		// 	spawnThread(clntSock, clntAddr.sin_addr.s_addr, doc_root);
 	}
 }
 
-void spawnThread(int clntSock, unsigned long addr, std::string doc_root)
+void spawnThread(int clntSock, unsigned long clntAddr, std::string doc_root)
 {
 	pthread_t * thread = new pthread_t();
-	unsigned int threadIndex = ThreadArgs::threadOcean.size();
-	for (unsigned int i = 0; i < ThreadArgs::threadOcean.size(); i++) {
-		if (!ThreadArgs::threadOcean[i]) {
-			threadIndex = i;
-			pthread_mutex_lock(&ThreadArgs::threadOceanMutex);
-			ThreadArgs::threadOcean[i] = thread;
-			pthread_mutex_unlock(&ThreadArgs::threadOceanMutex);
-		}
-		// cout << ThreadArgs::threadOcean[i] << endl;
-	}
-	if (threadIndex == ThreadArgs::threadOcean.size())
-		ThreadArgs::threadOcean.push_back(thread);
-	void * args = new ThreadArgs(threadIndex, clntSock, addr, doc_root);
+	void * args = new ThreadArgs(thread, clntSock, doc_root, clntAddr);
 	pthread_create(thread, NULL, HandleTCPClient, args);
 }

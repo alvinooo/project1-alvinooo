@@ -3,8 +3,13 @@
 
 #include "httpd_util.h"
 
-void start_httpd(unsigned short port, std::string doc_root);
+extern unsigned int poolSize;
 
-static const int MAXPENDING = 5; // Maximum outstanding connection requests
+void start_httpd(unsigned short port, std::string doc_root);
+void * acceptLoopWrapper(void * args);
+void acceptLoop(int servSock, std::string doc_root, ThreadPool * pool);
+void spawnThread(int clntSock, unsigned long addr, std::string doc_root);
+
+static const int MAXPENDING = 100; // Maximum outstanding connection requests
 
 #endif // HTTPD_H

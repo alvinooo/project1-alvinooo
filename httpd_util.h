@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <vector>
+#include <queue>
 #include <string>
 #include <cstddef>
 #include <limits.h>
@@ -21,24 +22,12 @@
 #include <string.h>
 #include <errno.h>
 #include <fstream>
+#include "Thread.h"
 
-class ThreadArgs
-{
-public:
-	ThreadArgs(int _threadIndex, int _socket, unsigned long addr, std::string _doc_root);
-	~ThreadArgs();
-
-	static std::vector<pthread_t *> threadOcean;
-	static pthread_mutex_t threadOceanMutex;
-	int threadIndex;
-	int socket;
-	unsigned long addr;
-	std::string doc_root;
-};
+class ThreadPool;
 
 void spawnThread(int clntSock, unsigned long addr, std::string doc_root);
 void * HandleTCPClient(void * args);
-void cleanupThread(void * args);
 void DieWithSystemMessage(const char *msg);
 void debugPrint(char *buffer, int size);
 

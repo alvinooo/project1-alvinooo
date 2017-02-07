@@ -24,7 +24,7 @@ public:
 	string line;
 	vector<string> header;
 
-	// Extension 2 .htaccess variables
+	// Extension 2 .htaccess methods/variables
 	static void parseAccess(string path);
 	static unsigned long ipAddr(string host);
 	static bool allow(unsigned long addr, string path);

@@ -61,16 +61,16 @@ void Response::buildResponse(string doc_root)
 	errno = 0;
 	stat(resolvedPath, &st);
 
-	// HTTP/1.1 403 Forbidden
-	if (!(st.st_mode & S_IRUSR)) {
-		line.append("403 Forbidden");
+	// HTTP/1.0 404 Not Found
+	if (errno == ENOENT) {
+		line.append("404 Not Found");
 		sendResponse();
 		return;
 	}
 
-	// HTTP/1.0 404 Not Found
-	if (errno == ENOENT) {
-		line.append("404 Not Found");
+	// HTTP/1.1 403 Forbidden
+	else if (!(st.st_mode & S_IRUSR)) {
+		line.append("403 Forbidden");
 		sendResponse();
 		return;
 	}
