@@ -29,6 +29,7 @@ void * HandleTCPClient(void * args)
 
 	if (setsockopt(clntSocket, SOL_SOCKET, SO_RCVTIMEO,
 		(struct timeval *) &tv, sizeof(struct timeval)) != 0) {
+		cerr << errno << endl;
 		delete ((ThreadArgs *) args);
 		DieWithSystemMessage("setsockopt() failed");
 	}

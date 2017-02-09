@@ -14,6 +14,7 @@ void Request::parse(char * frame, int size)
 	valid = 1;
 
 	parseLine(frame, size);
+	// debugPrint(frame, size);
 	if (!valid)
 		return;
 	parseHeader(frame, size);
