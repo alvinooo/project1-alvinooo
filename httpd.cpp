@@ -40,7 +40,6 @@ void start_httpd(unsigned short port, std::string doc_root)
 		void * servArgs = new ThreadArgs(NULL, servSock, doc_root);
 		ThreadPool pool = ThreadPool(acceptLoopWrapper, servArgs, poolSize);
 
-		(void) pool;
 		for (;;) {
 			for (unsigned int i = 0; i < poolSize; i++) {
 				pthread_join(*(pool.pool[i]), NULL);
@@ -60,10 +59,6 @@ void * acceptLoopWrapper(void * args)
 
 void acceptLoop(int servSock, std::string doc_root, ThreadPool * pool)
 {
-	(void) servSock;
-	(void) doc_root;
-	(void) pool;
-
 	for (;;) {
 		struct sockaddr_in clntAddr;
 		socklen_t clntAddrLen = sizeof(clntAddr);
