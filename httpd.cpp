@@ -39,7 +39,6 @@ void start_httpd(unsigned short port, std::string doc_root)
 	if (poolSize > 0) {
 		void * servArgs = new ThreadArgs(NULL, servSock, doc_root);
 		ThreadPool pool = ThreadPool(acceptLoopWrapper, servArgs, poolSize);
-		delete (ThreadArgs *) servArgs;
 
 		(void) pool;
 		for (;;) {
@@ -88,27 +87,23 @@ void acceptLoop(int servSock, std::string doc_root, ThreadPool * pool)
 				ntohs(clntAddr.sin_port) << std::endl;
 		else
 			std::cerr << "Unable to get client address" << std::endl;
-		// if (pool) {
-		// 	if (pool->available > 0) {
-		// 		pthread_mutex_lock(&pool->threadPoolMutex);
-		// 		pool->available--;
-		// 		pthread_mutex_unlock(&pool->threadPoolMutex);
+		if (pool) {
+			if (pool->available > 0) {
+				pthread_mutex_lock(&pool->threadPoolMutex);
+				pool->available--;
+				pthread_mutex_unlock(&pool->threadPoolMutex);
 
-		// 		cout << "pool thread handling client socket " << clntSock << endl;
-		// 		cout << "Pool size " << pool->available << endl;
-		// 		void * args = new ThreadArgs(NULL, clntSock, doc_root,
-		// 			clntAddr.sin_addr.s_addr, pool);
-		// 		HandleTCPClient(args);
+				void * args = new ThreadArgs(NULL, clntSock, doc_root,
+					clntAddr.sin_addr.s_addr, pool);
+				HandleTCPClient(args);
 
-		// 		pthread_mutex_lock(&pool->threadPoolMutex);
-		// 		pool->available++;
-		// 		pthread_mutex_unlock(&pool->threadPoolMutex);
-		// 	} else {
-		// 		cout << "TODO: pool thread Enqueue " << clntSock << endl;
-		// 	}
-		// }
-		// else
-		// 	spawnThread(clntSock, clntAddr.sin_addr.s_addr, doc_root);
+				pthread_mutex_lock(&pool->threadPoolMutex);
+				pool->available++;
+				pthread_mutex_unlock(&pool->threadPoolMutex);
+			}
+		}
+		else
+			spawnThread(clntSock, clntAddr.sin_addr.s_addr, doc_root);
 	}
 }
 

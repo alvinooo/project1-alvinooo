@@ -39,7 +39,7 @@ int Stream::getRequest(Request &req)
 	memset(buffer, 0, frameSize + DUAL_CRLF);
 
 	// Shift any remaining bytes to front
-	memcpy(buffer, end + DUAL_CRLF, bufferPtr - frameSize);
+	memmove(buffer, end + DUAL_CRLF, bufferPtr - frameSize);
 
 	// Clear out remaining bytes
 	memset(end + DUAL_CRLF + bufferPtr - frameSize,

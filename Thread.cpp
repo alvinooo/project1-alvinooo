@@ -12,7 +12,7 @@ ThreadArgs::~ThreadArgs()
 }
 
 ThreadPool::ThreadPool(void * (routine)(void *), void * args, unsigned int poolSize)
-	:available(poolSize), threadPoolMutex(PTHREAD_MUTEX_INITIALIZER)
+	:servArgs((ThreadArgs *) args), available(poolSize), threadPoolMutex(PTHREAD_MUTEX_INITIALIZER)
 {
 	pool = std::vector<pthread_t *>(poolSize, new pthread_t());
 	((ThreadArgs *) args)->pool = this;
@@ -29,6 +29,7 @@ ThreadPool::ThreadPool(void * (routine)(void *), void * args, unsigned int poolS
 
 ThreadPool::~ThreadPool()
 {
+	delete (ThreadArgs *) servArgs;
 	for (unsigned int i = 0; i < pool.size(); i++) {
 		if (pool[i]) {
 			delete pool[i];

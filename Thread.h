@@ -3,16 +3,7 @@
 
 #include "httpd_util.h"
 
-class ThreadPool
-{
-public:
-	ThreadPool(void * (routine)(void *), void * args, unsigned int poolSize);
-	~ThreadPool();
-
-	std::vector<pthread_t *> pool;
-	unsigned int available;
-	pthread_mutex_t threadPoolMutex;
-};
+class ThreadPool;
 
 class ThreadArgs
 {
@@ -26,6 +17,18 @@ public:
 	std::string doc_root;
 	unsigned long addr;
 	ThreadPool * pool;
+};
+
+class ThreadPool
+{
+public:
+	ThreadPool(void * (routine)(void *), void * args, unsigned int poolSize);
+	~ThreadPool();
+
+	ThreadArgs * servArgs;
+	std::vector<pthread_t *> pool;
+	unsigned int available;
+	pthread_mutex_t threadPoolMutex;
 };
 
 #endif
