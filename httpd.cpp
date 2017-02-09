@@ -42,16 +42,9 @@ void start_httpd(unsigned short port, std::string doc_root)
 
 		(void) pool;
 		for (;;) {
-			// struct sockaddr_in clntAddr;
-			// socklen_t clntAddrLen = sizeof(clntAddr);
-			// int clntSock = accept(servSock, (struct sockaddr *) &clntAddr, &clntAddrLen);
-			// if (clntSock < 0)
-			// 	DieWithSystemMessage("accept() failed");
-			// cout << "TODO: Main thread enqueue client " << clntSock << endl;
-			pthread_yield();
-			// for (int i = 0; i < poolSize; i++) {
-			// 	pthread_join(threads[i], NULL);
-			// }
+			for (unsigned int i = 0; i < poolSize; i++) {
+				pthread_join(*(pool.pool[i]), NULL);
+			}
 		}
 	} else {
 		acceptLoop(servSock, doc_root, NULL);
