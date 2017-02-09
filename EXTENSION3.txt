@@ -1,0 +1,73 @@
+Alvin Heng
+A11308554
+
+Average Latencies (ms)
+
+Level - 2
+No pool - 3.149
+Pool - 3.103
+
+Level - 3
+No pool - 2.285
+Pool - 2.093
+
+Level - 4
+No pool - 1.576
+Pool - 1.693
+
+Level - 5
+No pool - 1.478
+Pool - 1.448
+
+Level - 10
+No pool - 0.994
+Pool - 0.978
+
+Level - 20
+No pool - 0.757
+Pool - 0.685
+
+ab -n100 -c2 -i -H "Connection:close" 128.54.70.226:8888/
+… 
+ab -n100 -c20 -i -H "Connection:close" 128.54.70.226:8888/
+
+
+Average Throughputs (Kbytes/s)
+
+Level - 2
+No pool - 3827.71
+Pool - 3613.65
+
+Level - 3
+No pool - 4832.59
+Pool - 4908.94
+
+Level - 4
+No pool - 6101.84
+Pool - 6036.32
+
+Level - 5
+No pool - 6791.42
+Pool - 6894.65
+
+Level - 10
+No pool - 8578.73
+Pool - 9406.75
+
+Level - 20
+No pool - 2902.77
+Pool - 9420.47
+
+ab -n20 -c2 -H "Connection:close" 128.54.70.226:8888/kitten1.jpg
+… 
+ab -n20 -c20 -H "Connection:close" 128.54.70.226:8888/kitten1.jpg
+
+
+1. Latencies between the two threading models varied slightly.
+2. Throughput between the two threading models varied slightly.
+3. Latencies between the two threading models varied slightly.
+4. The per-connection threading model performed worse than the thread pool model at concurrency level 10 and then significantly worse at level 20. The server also visibly lagged at level 20 when running the per-connection threading model.
+
+
+Notes
+-Have to change line 49 of Request.cpp to "HTTP/1.0" to make ab work.

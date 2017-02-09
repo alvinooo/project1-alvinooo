@@ -1,0 +1,100 @@
+﻿Alvin Heng
+A11308554
+Testing
+
+
+The test.sh script tests the server by sending identical concurrent requests and checking if the responses are all the same.
+
+
+Additional testing for custom requests like malformed ones and back-to-back requests were made using telnet. Also made some curl requests to test .htaccess and 403 errors I forgot to copy down.
+
+
+telnet test cases
+
+
+200 OK
+
+
+GET / HTTP/1.1
+Host:a
+
+
+400
+
+
+asdf
+
+
+wrong method
+POST / HTTP/1.1
+Host: a
+
+
+missing path
+GET HTTP/1.1
+Host: a
+
+
+wrong version
+GET / HTTP/1.111111
+Host: a
+
+
+missing host
+GET / HTTP/1.1
+Ghost: a
+
+
+key w/o value
+GET / HTTP/1.1
+Host:
+
+
+missing colon
+GET / HTTP/1.1
+Host a
+
+
+key w/o value
+GET / HTTP/1.1
+: a
+
+
+404
+escape
+/../../../index.html
+
+
+nonexistent ..
+/subdir/../notexist.html
+
+
+Pipelined + Connection: close
+GET / HTTP/1.1
+Host:a
+
+
+GET / HTTP/1.1
+Host:a
+
+
+GET / HTTP/1.1
+Host:a
+Connection: close
+
+
+Pipelined + Timeout
+GET / HTTP/1.1
+Host:a
+
+
+GET / HTTP/1.1
+Host:a
+
+
+GET / HTTP/1.1
+Host:a
+
+
+GET / HTTP/1.1
+Host:a
