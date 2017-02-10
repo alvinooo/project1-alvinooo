@@ -187,8 +187,6 @@ unsigned long Response::ipAddr(string host)
 		error.append(gai_strerror(rtnVal));
 		DieWithSystemMessage(error.c_str());
 	}
-	while (clientAddr->ai_next != NULL)
-		clientAddr = clientAddr->ai_next;
 
 	struct sockaddr_in * client = (struct sockaddr_in *) clientAddr->ai_addr;
 	addr = ntohl(client->sin_addr.s_addr);
